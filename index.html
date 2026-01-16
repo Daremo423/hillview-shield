@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hillview Resident Shield</title>
+    <!-- Scripts for React, Tailwind, and Icons -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Simple Icon Component to bridge Lucide into React
+        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className} style={{ color }}></i>;
+        };
+
+        const App = () => {
+            const [currentStep, setCurrentStep] = useState('welcome');
+            const [isDiscreet, setIsDiscreet] = useState(false);
+            const [showShare, setShowShare] = useState(false);
+            const [copied, setCopied] = useState(false);
+            const [residentData, setResidentData] = useState({
+                name: '',
+                unitNumber: '',
+                firstSightingDate: '',
+                description: '',
+            });
+            const [logs, setLogs] = useState([]);
+            const [appUrl, setAppUrl] = useState('');
+
+            useEffect(() => {
+                setAppUrl(window.location.href);
+                lucide.createIcons();
+            }, []);
+
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(appUrl)}&ecc=M&margin=4`;
+
+            const copyToClipboard = () => {
+                const el = document.createElement('textarea');
+                el.value = appUrl;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            const addLog = () => {
+                if (!residentData.description) return;
+                const newLog = {
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString(),
+                    note: residentData.description
+                };
+                setLogs([newLog, ...logs]);
+                setResidentData({ ...residentData, description: '' });
+            };
+
+            const generateLetter = () => {
+                const today = new Date().toLocaleDateString();
+                return `DATE: ${today}\nTO: Domus Management / Jamboree Housing\nRE: NOTICE OF HABITABILITY DEFECT - UNIT ${residentData.unitNumber}\n\nDear Management,\n\nI am writing to you today regarding a persistent cockroach infestation in my unit (first noticed around ${residentData.firstSightingDate}). This condition violates the implied warranty of habitability and California Civil Code § 1941.1.\n\nI am formally requesting a professional, building-wide pest control treatment to resolve this issue within a reasonable timeframe.\n\nSincerely,\n${residentData.name || 'A Concerned Resident'}`;
+            };
+
+            const handleDownload = () => {
+                const element = document.createElement("a");
+                const file = new Blob([generateLetter()], {type: 'text/plain'});
+                element.href = URL.createObjectURL(file);
+                element.download = `Hillview_Notice_Unit_${residentData.unitNumber}.txt`;
+                document.body.appendChild(element);
+                element.click();
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center p-4 md:p-8">
+                    
+                    {/* Sharing Modal */}
+                    {showShare && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                            <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 relative shadow-2xl text-center">
+                                <button onClick={() => setShowShare(false)} className="absolute top-6 right-6 p-2 bg-slate-100 rounded-full">
+                                    <Icon name="x" className="w-5 h-5" />
+                                </button>
+                                <h3 className="text-2xl font-black text-slate-900 mb-2">SCAN TO SHARE</h3>
+                                <p className="text-sm text-slate-500 mb-6">Point your phone camera here to open the app.</p>
+                                <div className="bg-white p-4 inline-block border-8 border-slate-50 rounded-[2.5rem] mb-6 shadow-inner">
+                                    <img src={qrCodeUrl} alt="QR Code" className="w-56 h-56" />
+                                </div>
+                                <button onClick={copyToClipboard} className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all ${copied ? 'bg-green-600 text-white' : 'bg-slate-900 text-white'}`}>
+                                    <Icon name={copied ? "check" : "copy"} className="w-5 h-5" />
+                                    {copied ? 'LINK COPIED' : 'COPY WEB LINK'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="w-full max-w-md bg-white shadow-2xl rounded-[3rem] overflow-hidden border border-white flex flex-col min-h-[680px]">
+                        {/* Header */}
+                        <div className="px-6 py-6 bg-slate-900 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-600 rounded-xl"><Icon name="shield" className="w-5 h-5 text-white" /></div>
+                                <span className="text-white font-black text-xs uppercase tracking-[0.2em]">{isDiscreet ? "Maintenance Helper" : "Hillview Shield"}</span>
+                            </div>
+                            <button onClick={() => setIsDiscreet(!isDiscreet)} className="p-2 text-slate-400">
+                                <Icon name={isDiscreet ? "eye" : "eye-off"} className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-8 flex-grow">
+                            {currentStep === 'welcome' && (
+                                <div className="text-center space-y-8 py-4">
+                                    <div className="flex justify-center"><div className="p-6 bg-blue-600 rounded-full shadow-xl animate-bounce"><Icon name="shield" className="w-16 h-16 text-white" /></div></div>
+                                    <div>
+                                        <h1 className="text-3xl font-black text-slate-900 mb-2 uppercase">{isDiscreet ? "Maintenance App" : "Hillview Shield"}</h1>
+                                        <p className="text-slate-500 font-medium">Safe reporting and legal protections for the residents of 1000 Hillview.</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <button onClick={() => setCurrentStep('basics')} className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg">GET STARTED</button>
+                                        <button onClick={() => setShowShare(true)} className="w-full py-4 bg-slate-50 border-2 border-slate-200 text-slate-600 rounded-[1.5rem] font-bold flex items-center justify-center gap-2"><Icon name="share-2" className="w-5 h-5" /> Share with Neighbor</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentStep === 'basics' && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-black">Your Details</h2>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unit Number</label>
+                                            <input type="text" placeholder="e.g. 101" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-600 text-xl font-bold" value={residentData.unitNumber} onChange={e => setResidentData({...residentData, unitNumber: e.target.value})} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Name (Optional)</label>
+                                            <input type="text" placeholder="Anonymous" className="w-full p-4 bg-slate-50 rounded-2xl outline-none" value={residentData.name} onChange={e => setResidentData({...residentData, name: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 pt-4">
+                                        <button onClick={() => setCurrentStep('welcome')} className="flex-1 py-4 bg-slate-100 rounded-2xl font-bold">Back</button>
+                                        <button onClick={() => setCurrentStep('log')} disabled={!residentData.unitNumber} className={`flex-1 py-4 rounded-2xl font-black text-white ${residentData.unitNumber ? 'bg-blue-600' : 'bg-slate-300'}`}>NEXT</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentStep === 'log' && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-black flex items-center gap-2"><Icon name="bug" className="w-6 h-6 text-blue-600" /> Evidence</h2>
+                                    <div className="bg-slate-50 p-6 rounded-3xl space-y-4">
+                                        <input type="date" className="w-full p-3 bg-white rounded-xl shadow-sm" value={residentData.firstSightingDate} onChange={e => setResidentData({...residentData, firstSightingDate: e.target.value})} />
+                                        <textarea placeholder="Describe the problem..." className="w-full p-4 bg-white rounded-xl h-24 shadow-sm" value={residentData.description} onChange={e => setResidentData({...residentData, description: e.target.value})} />
+                                        <button onClick={addLog} className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-xs tracking-widest uppercase">Add Observation</button>
+                                    </div>
+                                    {logs.length > 0 && (
+                                        <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                                            {logs.map(log => (
+                                                <div key={log.id} className="p-3 bg-green-50 border border-green-100 rounded-xl text-xs flex justify-between items-center">
+                                                    <span><strong>{log.date}:</strong> {log.note}</span>
+                                                    <Icon name="check-circle-2" className="w-4 h-4 text-green-500" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-4">
+                                        <button onClick={() => setCurrentStep('basics')} className="flex-1 py-4 bg-slate-100 rounded-2xl font-bold">Back</button>
+                                        <button onClick={() => setCurrentStep('shield')} className="flex-1 py-4 bg-blue-600 rounded-2xl font-black text-white">CONTINUE</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentStep === 'shield' && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-black uppercase">The Shield</h2>
+                                    <div className="bg-amber-50 p-4 border-l-4 border-amber-500 rounded-r-2xl text-xs text-amber-900 leading-relaxed font-bold">
+                                        Retaliation Protection: California Civil Code 1942.5 bars management from evicting you for 6 months after you send this notice.
+                                    </div>
+                                    <div className="bg-slate-900 p-5 rounded-[2rem] font-mono text-[10px] text-blue-200 h-40 overflow-y-auto leading-relaxed">
+                                        {generateLetter()}
+                                    </div>
+                                    <button onClick={handleDownload} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
+                                        <Icon name="download" className="w-5 h-5" /> DOWNLOAD SHIELD
+                                    </button>
+                                    <div className="flex gap-4">
+                                        <button onClick={() => setCurrentStep('log')} className="flex-1 py-4 bg-slate-100 rounded-2xl font-bold">Back</button>
+                                        <button onClick={() => setCurrentStep('escalate')} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase">Help</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentStep === 'escalate' && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-black text-red-600">ESCALATION</h2>
+                                    <div className="p-5 border-2 border-slate-100 rounded-[2rem] space-y-3">
+                                        <h3 className="font-black text-slate-800 flex items-center gap-2"><Icon name="alert-circle" className="w-5 h-5 text-red-500" /> City Inspectors</h3>
+                                        <p className="text-xs text-slate-500">Report roaches to Milpitas Enforcement.</p>
+                                        <a href="https://www.milpitas.gov/mymilpitas/" target="_blank" className="block text-center py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-sm uppercase">Open MyMilpitas</a>
+                                    </div>
+                                    <div className="p-5 border-2 border-slate-100 rounded-[2rem] space-y-3">
+                                        <h3 className="font-black text-slate-800 flex items-center gap-2"><Icon name="phone" className="w-5 h-5 text-green-500" /> Legal Hotline</h3>
+                                        <p className="text-xs text-slate-500">Free advice from Law Foundation of SV.</p>
+                                        <a href="tel:4082802424" className="block text-center py-3 bg-green-50 text-green-700 rounded-xl font-black text-sm uppercase">Call (408) 280-2424</a>
+                                    </div>
+                                    <button onClick={() => {setResidentData({name:'',unitNumber:'',firstSightingDate:'',description:''});setLogs([]);setCurrentStep('welcome');}} className="w-full py-3 text-slate-300 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"><Icon name="trash-2" className="w-3 h-3" /> Erase Session</button>
+                                    <button onClick={() => setCurrentStep('shield')} className="w-full py-3 bg-slate-100 rounded-xl font-bold">Back</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        {currentStep !== 'welcome' && (
+                            <div className="px-8 py-5 bg-slate-50 border-t flex justify-between items-center">
+                                <div className="flex gap-2">
+                                    {['basics', 'log', 'shield', 'escalate'].map((s, i) => (
+                                        <div key={i} className={`h-1.5 rounded-full ${currentStep === s || (currentStep === 'escalate' && i === 3) ? 'bg-blue-600 w-8' : 'bg-slate-200 w-3'}`}></div>
+                                    ))}
+                                </div>
+                                <span className="text-[10px] font-black text-slate-900 uppercase">Unit {residentData.unitNumber}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
