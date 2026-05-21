@@ -21,14 +21,17 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Simple Icon Component to bridge Lucide into React
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+            const ref = useRef(null);
             useEffect(() => {
-                lucide.createIcons();
+                if (ref.current) {
+                    lucide.createIcons({ root: ref.current });
+                }
             }, [name]);
-            return <i data-lucide={name} className={className} style={{ color }}></i>;
+            return <span ref={ref} style={{ display: 'contents' }}><i data-lucide={name} className={className} style={{ color }}></i></span>;
         };
 
         const App = () => {
@@ -47,7 +50,6 @@
 
             useEffect(() => {
                 setAppUrl(window.location.href);
-                lucide.createIcons();
             }, []);
 
             const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(appUrl)}&ecc=M&margin=4`;

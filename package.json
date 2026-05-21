@@ -1,0 +1,24 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "An app to save us from the roaches.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Daremo423/hillview-shield.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Daremo423/hillview-shield/issues"
+  },
+  "homepage": "https://github.com/Daremo423/hillview-shield#readme",
+  "dependencies": {
+    "puppeteer": "^25.0.4"
+  }
+}
