@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className} style={{ color }}></i>;
+        };
+
+        const App = () => {
+            const [renderTime, setRenderTime] = useState(null);
+
+            useEffect(() => {
+                const start = performance.now();
+                // We'll just measure the initial render, but useEffects run after render.
+                // To measure the time taken by all the lucide.createIcons() calls:
+                const end = performance.now();
+                console.log(`Render time: ${end - start}ms`);
+            }, []);
+
+            const icons = Array.from({ length: 500 }).map((_, i) => (
+                <Icon key={i} name="shield" />
+            ));
+
+            return <div>{icons}</div>;
+        };
+
+        const start = performance.now();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+        // To get full render time including useEffects:
+        setTimeout(() => {
+            const end = performance.now();
+            document.body.innerHTML += `<div id="result">Total time: ${end - start}ms</div>`;
+            console.log(`Total time: ${end - start}ms`);
+        }, 1000);
+    </script>
+</body>
+</html>
