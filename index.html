@@ -21,7 +21,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         // Simple Icon Component to bridge Lucide into React
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
@@ -74,14 +74,14 @@
                 setResidentData({ ...residentData, description: '' });
             };
 
-            const generateLetter = () => {
+            const letterContent = useMemo(() => {
                 const today = new Date().toLocaleDateString();
                 return `DATE: ${today}\nTO: Domus Management / Jamboree Housing\nRE: NOTICE OF HABITABILITY DEFECT - UNIT ${residentData.unitNumber}\n\nDear Management,\n\nI am writing to you today regarding a persistent cockroach infestation in my unit (first noticed around ${residentData.firstSightingDate}). This condition violates the implied warranty of habitability and California Civil Code § 1941.1.\n\nI am formally requesting a professional, building-wide pest control treatment to resolve this issue within a reasonable timeframe.\n\nSincerely,\n${residentData.name || 'A Concerned Resident'}`;
-            };
+            }, [residentData.unitNumber, residentData.firstSightingDate, residentData.name]);
 
             const handleDownload = () => {
                 const element = document.createElement("a");
-                const file = new Blob([generateLetter()], {type: 'text/plain'});
+                const file = new Blob([letterContent], {type: 'text/plain'});
                 element.href = URL.createObjectURL(file);
                 element.download = `Hillview_Notice_Unit_${residentData.unitNumber}.txt`;
                 document.body.appendChild(element);
@@ -191,7 +191,7 @@
                                         Retaliation Protection: California Civil Code 1942.5 bars management from evicting you for 6 months after you send this notice.
                                     </div>
                                     <div className="bg-slate-900 p-5 rounded-[2rem] font-mono text-[10px] text-blue-200 h-40 overflow-y-auto leading-relaxed">
-                                        {generateLetter()}
+                                        {letterContent}
                                     </div>
                                     <button onClick={handleDownload} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
                                         <Icon name="download" className="w-5 h-5" /> DOWNLOAD SHIELD
